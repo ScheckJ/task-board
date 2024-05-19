@@ -18,19 +18,31 @@ function generateTaskId() {
 // Todo: create a function to create a task card
 // create elements with jQuery
 function createTaskCard(task) {
-  // elements to create card h2 for tthe title, p for the content, p for the due date, div to
+  // elements to create card h2 for the title, p for the content, p for the due date, div to
   const taskCard = $("<div>")
     .addClass("card w-75 task-card draggable my-3")
-    .attr("data-task-id", task.id);
+    .attr("data-id=", task.id);
   const title = $("<h2>").addClass("card-header h4").text(task.taskName);
   const description = $("<p>").addClass("card-text").text(task.description);
   const dueDate = $("<p>").addClass("card-text").text(task.dueDate);
-  const deleteBtn = $("<button>").addClass("btn btn-danger delete").text(`Delete`);
+  const deleteBtn = $("<button>").addClass(`btn btn-danger delete`).attr("data-id", task.id).text(`Delete`);
+  deleteBtn.onClick = function() {
+    handleDeleteTask(taskList)
+  }
+
+const date = dayjs(task.duedate);
+const today = dayjs();
+let difference = today.diff(date, 'day')
+
+if (difference === 0 ) {
+taskCard.addClass('due-today');
+} else if (differene > 0) {
+  taskCard.addClass('overdue')
+}
 
   taskCard.append(title, description, dueDate, deleteBtn);
   return taskCard;
 }
-
 // Todo: create a function to render the task list and make cards draggable
 function renderTaskList() {
   // select the elements we will need to append to
@@ -53,6 +65,12 @@ function renderTaskList() {
   }
 
   // make the cards draggable
+  $('.draggable').draggable({
+    snap: '#in-progress-cards, #done-cards, #todo-cards',
+    snapMode: 'inner',
+    stack: '.swim-lanes',
+    appendTo: '.lane'
+  })
 }
 
 // Todo: create a function to handle adding a new task
@@ -84,11 +102,37 @@ function handleAddTask(event) {
 // Todo: create a function to handle deleting a task
 function handleDeleteTask(event) {
 
+
+taskList.remove()
+
 }
+
 
 // Todo: create a function to handle dropping a task into a new status lane
 function handleDrop(event, ui) {
+  const taskId = event.target.id;
+  const taskClass = ui.draggable[0].classList
+  const uniqueId = ui.draggable[0].dataset.id
 
+  if (taskId === 'to-do') {
+    taskClass.remove('done', 'in-progress', 'to-do');
+    taskClass.add('to-do')
+    event.target.id = 'to-do'
+  } else if (taskId === 'in-progress') {
+    taskClass.remove('done', 'in-progress', 'to-do');
+    taskClass.add('in-progress')
+    event.target.id = 'in-progess'
+  } else if (taskId === 'done') {
+    taskClass.remove('done', 'in-progress', 'to-do');
+    taskClass.add('done')
+    event.target.id = 'done'
+  }
+
+  for (const item of taskList) {
+    if (item.id === uniqueId) {
+      item.state = taskId;
+    }
+  }
 }
 
 // Todo: when the page loads, render the task list, add event listeners, make lanes droppable, and make the due date field a date picker
