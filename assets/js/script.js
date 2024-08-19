@@ -21,23 +21,24 @@ function createTaskCard(task) {
   // elements to create card h2 for the title, p for the content, p for the due date, div to
   const taskCard = $("<div>")
     .addClass("card w-75 task-card draggable my-3")
-    .attr("data-id=", task.id);
+    .attr("data-id", task.id);
   const title = $("<h2>").addClass("card-header h4").text(task.taskName);
   const description = $("<p>").addClass("card-text").text(task.description);
   const dueDate = $("<p>").addClass("card-text").text(task.dueDate);
   const deleteBtn = $("<button>").addClass(`btn btn-danger delete`).attr("data-id", task.id).text(`Delete`);
-  deleteBtn.onClick = function() {
-    handleDeleteTask(taskList)
-  }
+
+
+deleteBtn.click(handleDeleteTask)
 
 const date = dayjs(task.duedate);
 const today = dayjs();
 let difference = today.diff(date, 'day')
 
 if (difference === 0 ) {
-taskCard.addClass('due-today');
-} else if (differene > 0) {
-  taskCard.addClass('overdue')
+taskCard.addClass('due-today')
+} else if (difference > 0) {
+  taskCard.addClass('overdue');
+
 }
 
   taskCard.append(title, description, dueDate, deleteBtn);
@@ -75,7 +76,6 @@ function renderTaskList() {
 
 // Todo: create a function to handle adding a new task
 function handleAddTask(event) {
-  event.preventDefault();
 
   const taskData = {
     id: generateTaskId(),
@@ -102,43 +102,63 @@ function handleAddTask(event) {
 // Todo: create a function to handle deleting a task
 function handleDeleteTask(event) {
 
+let dataId = $(this).attr('data-id');
 
-taskList.remove()
+taskList = taskList.filter(function(taskData) {
+  return taskData.id !== dataId;
+});
+localStorage.setItem('tasks', JSON.stringify(taskList));
+renderTaskList();
 
 }
 
 
 // Todo: create a function to handle dropping a task into a new status lane
 function handleDrop(event, ui) {
-  const taskId = event.target.id;
-  const taskClass = ui.draggable[0].classList
-  const uniqueId = ui.draggable[0].dataset.id
+  const taskElement = ui.draggable[0];
+  const taskId = event.target.id; // Get the drop target's id
+  const uniqueId = taskElement.dataset.id; // Get the unique ID from the dragged element
+  const taskClass = taskElement.classList;
 
-  if (taskId === 'to-do') {
-    taskClass.remove('done', 'in-progress', 'to-do');
-    taskClass.add('to-do')
-    event.target.id = 'to-do'
-  } else if (taskId === 'in-progress') {
-    taskClass.remove('done', 'in-progress', 'to-do');
-    taskClass.add('in-progress')
-    event.target.id = 'in-progess'
-  } else if (taskId === 'done') {
-    taskClass.remove('done', 'in-progress', 'to-do');
-    taskClass.add('done')
-    event.target.id = 'done'
-  }
+  // Define a map for task states and classes
+  const taskStates = {
+    'to-do': 'to-do',
+    'in-progress': 'in-progress',
+    'done': 'done',
+  };
 
-  for (const item of taskList) {
-    if (item.id === uniqueId) {
-      item.state = taskId;
+  // If the taskId is in taskStates, update the task's class and state
+  if (taskStates[taskId]) {
+    taskClass.remove('done', 'in-progress', 'to-do');
+    taskClass.add(taskStates[taskId]);
+
+    // Update the task's state in the task list
+    for (const item of taskList) {
+      if (item.id === uniqueId) {
+        item.state = taskId;
+        break;
+      }
     }
+
+    // Save the updated task list to localStorage
+    localStorage.setItem('tasks', JSON.stringify(taskList));
+
+    // Re-render the task list
+    renderTaskList();
   }
 }
 
 // Todo: when the page loads, render the task list, add event listeners, make lanes droppable, and make the due date field a date picker
 $(document).ready(function () {
+
     renderTaskList()
 
   const formData = $("#formModal");
   formData.on("submit", handleAddTask);
+
+  $('.lane').droppable({
+    accept: '.draggable',
+    drop: handleDrop()
+  });
+
 });

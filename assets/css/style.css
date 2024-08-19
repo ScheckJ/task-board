@@ -15,6 +15,15 @@ body {
   cursor: grab;
 }
 
+/* .due-today {
+background-color: yellow;
+}
+
+.overdue {
+background-color: red;
+} */
+
 #formModal {
   background-color: aliceblue;
 }
+
